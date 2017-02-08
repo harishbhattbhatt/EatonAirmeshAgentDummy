@@ -1,0 +1,606 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Eaton.IoT.DataIO</name>
+    </assembly>
+    <members>
+        <member name="F:Eaton.IoT.DataIO.Common.ConfigParams.EgressMqPullTimeoutInSeconds">
+            <summary>
+            Specifies the Message Bus time out in seconds. The default value is -1, which means it never time out.
+            </summary>
+        </member>
+        <member name="F:Eaton.IoT.DataIO.Common.ConfigParams.TopicExchange">
+            <summary>
+            Specifies the topic exchange name. The default value is "msg".
+            </summary>
+        </member>
+        <member name="F:Eaton.IoT.DataIO.Common.ConfigParams.IsTopicExchangeDurable">
+            <summary>
+            Specifies if the topic exchange is durable. The default value is false.
+            </summary>
+        </member>
+        <member name="F:Eaton.IoT.DataIO.Common.ConfigParams.C2DRoutingKey">
+            <summary>
+            The routing key for the c2d messages. The default value is "c2d.#".
+            </summary>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Common.LogUtilities">
+            <summary>
+            Utility class to assist logging.
+            </summary>
+            <remarks>The client shall use this class to log all debug and runtime messages.</remarks>
+        </member>
+        <member name="F:Eaton.IoT.DataIO.Common.LogUtilities.Newline">
+            <summary>
+            The newline character used in the log messages.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Common.LogUtilities.LogError(slf4net.ILogger,System.String,System.Exception)">
+            <summary>
+            Log Error messages with Exception
+            </summary>
+            <param name="logger">Logger</param>
+            <param name="msg">Error Message</param>
+            <param name="e">Exception</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Common.LogUtilities.LogInfo(slf4net.ILogger,System.String)">
+            <summary>
+            Log Info messages
+            </summary>
+            <param name="logger">Logger</param>
+            <param name="msg">Info Message</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Common.LogUtilities.LogWarn(slf4net.ILogger,System.String)">
+            <summary>
+            Log Warn messages
+            </summary>
+            <param name="logger">Logger</param>
+            <param name="msg">Warning Message</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Common.LogUtilities.LogDebug(slf4net.ILogger,System.String)">
+            <summary>
+            Log Debug Messages
+            </summary>
+            <param name="logger">Logger</param>
+            <param name="msg">Debug Message</param>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Contracts.IDataEgress">
+            <summary>
+            Data Egress to pull C2D messages from the IoT Platform.
+            This object is not thread-safe. it's recommended to use one DataEgress instance per thread.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Contracts.IDataEgress.SubscribeC2DAsync(System.Action{RabbitMQ.Client.Events.BasicDeliverEventArgs},System.Action{System.Exception},System.Threading.ManualResetEvent)">
+            <summary>
+            Start a dedicated thread to subscribe to and process the cloud-to-device data.
+            </summary>
+            <param name="processC2D">Action to process C2D data.</param>
+            <param name="processError">Action to process error that were triggered in the cloud-to-device data process.</param>
+            <param name="shutdownEvent">Signaled by the caller to shutdown the thread.</param>
+            <remarks>The caller must call this method only once, in order to process cloud-to-device data.</remarks>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Contracts.IDataEgress.Close">
+            <summary>
+            Close the DataIngress channel after using it.
+            </summary>
+            <remarks>The physical connection remains open after this call.</remarks>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Contracts.IDataIngress">
+            <summary>
+            Data Ingress to Push device-to-cloud messages to the IoT Platform.
+            This object is not thread-safe. it's recommended to use one DataIngress instance per thread.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Contracts.IDataIngress.Push(System.String,System.String,System.String,System.Byte[])">
+            <summary>
+            Push the device-to-cloud data to the platform
+            </summary>
+            <param name="iotHubName">Uniquely identifies an IoTHub instanc. It is the short name, not the full name.</param>
+            <param name="api">A string to uniquely identify the specific message schema. The payload data can be decoded based on this api string.</param>
+            <param name="publisherUUID">Uniquely identifies the publisher. This UUID is generated and maintained on the device. It has the format of "8-4-4-4-12"</param> 
+            <param name="data">Contains the payload bytes.</param>
+            <returns>The routing key that the data are pushed to the MQ.</returns>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Contracts.IDataIngress.Close">
+            <summary>
+            Close the DataEgress channel after using it.
+            </summary>
+            <remarks>The physical connection remains open after this call.</remarks>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Contracts.IDataIOConnection">
+            <summary>
+            Interface to get an instance of DataIO to push or receive IoT data to or from the platform.
+            Connections are heavy weight and its recommended to use one connection per client application. 
+            The DataIOConnection object is thread-safe.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Contracts.IDataIOConnection.CreateDataIngress">
+            <summary>
+            Create a Data Ingress instance to push device-to-cloud messages to the IoT Platform.
+            </summary>
+            <returns>Returns the Data Ingress instance.</returns>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Contracts.IDataIOConnection.CreateDataEgress">
+            <summary>
+            Create Data Egress instance to pull cloud-to-device messages from the IoT Platform.
+            </summary>
+            <returns>Returns the Data Egress instance.</returns>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Contracts.IDataIOConnection.IsOpen">
+            <summary>
+            Use this method to check the status of connection. Return connection state true if open, false if closed.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Contracts.IDataIOConnection.Close">
+            <summary>
+            Close the DataIO connection.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Contracts.IDataIOConnection.EgressMqPullTimeoutInSeconds">
+            <summary>
+            Specifies the timeout in seconds to receive cloud-to-device messages in the Egress. The default value is -1, which means the poll blocks until data are received. The valid range is between 1 and 60 or -1.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Contracts.IDataIOConnection.TopicExchange">
+            <summary>
+            Specifies the topic exchange name. The default value is "msg".
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Contracts.IDataIOConnection.IsTopicExchangeDurable">
+            <summary>
+            Specifies if the topic exchange is durable. The default value is false.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Contracts.IDataIOConnection.C2DRoutingKey">
+            <summary>
+            The routing key for the cloud-to-device messages. The default value is "c2d.#".
+            </summary>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Contracts.IDataIOFactory">
+            <summary>
+            Convenience "factory" interface to facilitate opening a fresh DataIO Connection instance, with all fields set to their respective defaults.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Contracts.IDataIOFactory.CreateConnection">
+            <summary>
+            Provide the connection object after validating the connection string, connection provided in open state
+            </summary>
+            <returns>DataIO connection object.</returns>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Contracts.IDataIOFactory.SetConnectionString(System.String)">
+            <summary>
+            Set the DataIO connection string in this format: "di://host:port;USERNAME=username;PASSWORD=password;PARTITION=partitionid"
+            </summary>
+            <param name="connectionString">The DataIO connection string.</param>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Core.RmqEgress">
+            <summary>
+             Data Egress to subscribe to and process Cloud to Device messages from the IoT Platform.
+             This object is not thread-safe. Please create one DataIngress object per thread.
+            </summary>
+        </member>
+        <member name="F:Eaton.IoT.DataIO.Core.RmqEgress._c2DChannel">
+            <summary>
+            The Cloud to Device channel
+            </summary>
+        </member>
+        <member name="F:Eaton.IoT.DataIO.Core.RmqEgress._connection">
+            <summary>
+            The Connection
+            </summary>
+        </member>
+        <member name="F:Eaton.IoT.DataIO.Core.RmqEgress._shutdownEvent">
+            <summary>
+            The Shutdown event
+            </summary>
+        </member>
+        <member name="F:Eaton.IoT.DataIO.Core.RmqEgress._subscriptionC2D">
+            <summary>
+            The Subscription for Cloud to Device queue
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.#ctor(RabbitMQ.Client.IConnection)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Eaton.IoT.DataIO.Core.RmqEgress"/> class.
+            </summary>
+            <param name="connection">The connection.</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.CreateExchange">
+            <summary>
+            Creates the exchange.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.Close">
+            <summary>
+            Close the DataIngress channel after using it.
+            </summary>
+            <remarks>
+            The physical connection remains open after this call.
+            </remarks>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.Dispose">
+            <summary>
+            Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.CloseChannel">
+            <summary>
+            Closes the channel.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.GetChannel(RabbitMQ.Client.IConnection)">
+            <summary>
+            Gets the channel.
+            </summary>
+            <param name="connection">The connection.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.CreateC2DQueue(RabbitMQ.Client.IModel)">
+            <summary>
+            Creates the Cloud to Device queue.
+            </summary>
+            <param name="channel">The channel.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.SubscribeC2DQueue">
+            <summary>
+            Subscribes the Cloud to Device queue.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.GetSubscription(RabbitMQ.Client.IModel,System.String,System.Boolean)">
+            <summary>
+            Gets the subscription.
+            </summary>
+            <param name="channel">The channel.</param>
+            <param name="queueName">Name of the queue.</param>
+            <param name="noAck">if set to <c>true</c> [no ack].</param>
+            <returns></returns>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.SubscribeC2DAsync(System.Action{RabbitMQ.Client.Events.BasicDeliverEventArgs},System.Action{System.Exception},System.Threading.ManualResetEvent)">
+            <summary>
+            Subscribes the c2 d asynchronous.
+            </summary>
+            <param name="processC2D">The action to process cloud-to-device data.</param>
+            <param name="processError">The action to process errors.</param>
+            <param name="shutdownEvent">The shutdown event.</param>
+            <exception cref="T:Eaton.IoT.DataIO.Exceptions.IngressInvalidArgumentException">shutdownEvent cannot be null.
+            or
+            shutdownCompleted cannot be null.</exception>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.ProcessC2DQueue">
+            <summary>
+            Processes the Cloud to Device queue.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.GetNextMqData(System.Int32,RabbitMQ.Client.Events.BasicDeliverEventArgs@)">
+            <summary>
+            Gets the next mq data. Added to support mocking of Subscrition as Next method of subscription 
+            is not virtual can not be mocked
+            </summary>
+            <param name="timeOut">The time out.</param>
+            <param name="eventArgs">The <see cref="T:RabbitMQ.Client.Events.BasicDeliverEventArgs"/> instance containing the event data.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqEgress.Init">
+            <summary>
+            Initializes this instance.
+            </summary>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Core.RmqIngress">
+            <summary>
+            Represents a RabbitMQ Data Ingress object to push device-to-cloud messages to the Platform.
+            This object is not thread-safe. Please create one instance per thread.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqIngress.GenerateRoutingKey(System.Boolean,System.String,System.String,System.String)">
+            <summary>
+            Generate the routing key: d2c|c2d.iothub name.api.publisher uuid
+            </summary>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Core.RmqConnection">
+            <summary>
+             Represents an instance of DataIO connection object to interact with the RabbitMQ message bus.
+            </summary>
+            <remarks>
+             The RabbitMQ connection is heavy weight. It is recommended to share a connection in all threads in the client application.
+            </remarks>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Core.RmqConnection.EgressMqPullTimeoutInSeconds">
+            <summary>
+            Specifies the timeout in seconds to receive cloud-to-device messages in the Egress. The default value is -1, which means the poll blocks until data are received. The valid range is between 1 and 60 or -1.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Core.RmqConnection.TopicExchange">
+            <summary>
+            Specifies the topic exchange name. The default value is "msg".
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Core.RmqConnection.IsTopicExchangeDurable">
+            <summary>
+            Specifies if the topic exchange is durable. The default value is false.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Core.RmqConnection.C2DRoutingKey">
+            <summary>
+            The routing key for the cloud-to-device messages. The default value is "c2d.#".
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqConnection.CreateDataIngress">
+            <summary>
+            Create a Data Ingress instance to push device-to-cloud messages to the IoT Platform.
+            </summary>
+            <returns>Returns the Data Ingress instance.</returns>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqConnection.CreateDataEgress">
+            <summary>
+            Create Data Egress instance to pull cloud-to-device messages from the IoT Platform.
+            </summary>
+            <returns>Returns the Data Egress instance.</returns>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqConnection.Open(Eaton.IoT.DataIO.Common.RmqConnectionParams)">
+            <summary>
+            Create the RabbitMq connection .
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqConnection.ConnectToRabbitMq">
+            <summary>
+            Create the RabbitMq connection.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqConnection.Close">
+            <summary>
+            Close the DataIO connection.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.RmqConnection.Dispose">
+            <summary>
+            Dispose the DataIO connection.
+            </summary>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Core.DataIOFactory">
+            <summary>
+            Convenience "factory" class to facilitate opening a fresh DataIO Connection instance, with all fields set to their respective defaults.
+            </summary>
+        </member>
+        <member name="F:Eaton.IoT.DataIO.Core.DataIOFactory._rmqConnectionParams">
+            \example DataIOSampleClient.cs
+            Sample Client for Data IO SDK 
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.DataIOFactory.CreateConnection">
+            <summary>
+            Create Data IO Connection and return it to client.
+            </summary>
+            <returns>Data IO connection object.</returns>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.DataIOFactory.SetConnectionString(System.String)">
+            <summary>
+            Set the Data IO connection string.
+            </summary>
+            <param name="connectionString">Connection string specified in the format "di://host:port;USERNAME=username;PASSWORD=password;PARTITION=partition;ENV=PROD" .
+             For e.g. "EndPoint=di://127.0.0.1:5672;USERNAME=username;PASSWORD=password;PARTITION=0000";</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Core.DataIOFactory.ParseConnectionString(System.String)">
+            <summary>
+            Validate DataIO Connection string and populate Connection params structure.
+            </summary>
+            <param name="connectionString">connection string provided by client</param>
+            <returns>COnnectionParams structure.</returns>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Exceptions.DataIOConnectionException">
+            <summary>
+            Represents an exception that will be thrown when not able to established connection with the DataIO.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Exceptions.DataIOConnectionException.#ctor(System.String)">
+            <summary>
+            Throws exception when not able to established connection with DataIngress.
+            </summary>
+            <param name="message">Error message.</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Exceptions.DataIOConnectionException.#ctor(System.String,System.Exception)">
+            <summary>
+            Throws exception when not able to established connection with DataIngress.
+            </summary>
+            <param name="message">Error message.</param>
+            <param name="innerException">Inner Exception.</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Exceptions.DataIOConnectionException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Throws exception when not able to established connection with DataIngress.
+            </summary>
+            <param name="info">Serialization object</param>
+            <param name="ctxt">Serialized stream</param>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Exceptions.IngressInvalidArgumentException">
+            <summary>
+            Represents an exception that will be thrown because of invalid arguments were passed to the operation/method.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Exceptions.IngressInvalidArgumentException.#ctor(System.String)">
+            <summary>
+            Invalid arguments were passed to the operation/method.
+            </summary>
+            <param name="message">Error message.</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Exceptions.IngressInvalidArgumentException.#ctor(System.String,System.Exception)">
+            <summary>
+            Invalid arguments were passed to the operation/method.
+            </summary>
+            <param name="message">Error message.</param>
+            <param name="innerException">Inner exception</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Exceptions.IngressInvalidArgumentException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Invalid arguments were passed to the operation/method.
+            </summary>
+            <param name="info">Serialization object</param>
+            <param name="ctxt">Serialized stream</param>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Exceptions.DataIOPushDataException">
+            <summary>
+            Represents an exception that will be thrown when not able to push data to DataIngress.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Exceptions.DataIOPushDataException.#ctor(System.String)">
+            <summary>
+            Throws when not able to push data to Data Ingress.
+            </summary>
+            <param name="message">Error message</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Exceptions.DataIOPushDataException.#ctor(System.String,System.Exception)">
+            <summary>
+            Throws when not able to push data to Data Ingress.
+            </summary>
+            <param name="message">Error Message</param>
+            <param name="innerException">Inner Exception</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Exceptions.DataIOPushDataException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Throws when not able to push data to Data Ingress.
+            </summary>
+            <param name="info">Serialization object</param>
+            <param name="ctxt">Serialized stream</param>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Exceptions.DataIOInvalidConnectionStringException">
+            <summary>
+            Represents an exception that will be thrown because of a connection string that is not valid.
+            </summary>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Exceptions.DataIOInvalidConnectionStringException.#ctor(System.String)">
+            <summary>
+            Throws when connection string is invalid.
+            </summary>
+            <param name="message">Error Message.</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Exceptions.DataIOInvalidConnectionStringException.#ctor(System.String,System.Exception)">
+            <summary>
+            Throws when connection string is invalid.
+            </summary>
+            <param name="message">Error Message.</param>
+            <param name="innerException">Inner Exception.</param>
+        </member>
+        <member name="M:Eaton.IoT.DataIO.Exceptions.DataIOInvalidConnectionStringException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Throws when connection string is invalid.
+            </summary>
+            <param name="info">Serialization object</param>
+            <param name="ctxt">Serialized stream</param>
+        </member>
+        <member name="T:Eaton.IoT.DataIO.Properties.Resources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.BrokerAuthenticationFailureExceptionMsg">
+            <summary>
+              Looks up a localized string similar to &quot;Failed to authenticate the broker with given Username and password. &quot; +
+                                                                              &quot;Please check the Data Ingress SDK log file for more details.&quot;;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.BrokerUnavailableStringMsg">
+            <summary>
+              Looks up a localized string similar to &quot;Failed to open Message broker connection. &quot; +
+                                                                        &quot;The server broker may be down.&quot; +
+                                                                        &quot;Please check the DIS SDK log file for more details.&quot;;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.ClosedConnectionMsg">
+            <summary>
+              Looks up a localized string similar to &quot;The connection to Data IO is closed. Please open the connection and resend the message&quot;;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.CreateChannelFailed">
+            <summary>
+              Looks up a localized string similar to &quot;Failed to create channel&quot;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.DeclareExchangeFailed">
+            <summary>
+              Looks up a localized string similar to &quot;Failed to declare Topic exchange&quot;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.EmptyConnectionStringMsg">
+            <summary>
+              Looks up a localized string similar to &quot;Empty connection string.&quot;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.FailedToCloseConnectionExceptionMsg">
+            <summary>
+              Looks up a localized string similar to &quot;Failed to colse connection to Data IO.&quot;;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.FailedToConnectExceptionMsg">
+            <summary>
+              Looks up a localized string similar to &quot;Failed to connect to Broker.&quot; +
+                                                                    &quot;Please check the Data Ingress SDK log file for more details.&quot;;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.FailedToCreateC2DQueue">
+            <summary>
+              Looks up a localized string similar to &quot;Failed to create C2D queue&quot;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.FailedToCreateIngressObjectMsg">
+            <summary>
+              Looks up a localized string similar to &quot;Failed to create Data IO object.&quot; +
+                                                                  &quot;Please set the connection string first before creating Data IO object.&quot;;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.FailedToDecryptPassword">
+            <summary>
+              Looks up a localized string similar to Failed to decrypt password, Please verify service URI and encrypted password.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.FailedToLoadIngressConfigFileMsg">
+            <summary>
+              Looks up a localized string similar to &quot;Failed to load Ingress Config file \&quot;Eaton.IoT.DataIO.com.DLL.config.\&quot;. Please copy the same with the Data Ingress library.&quot;;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.FailedToSubscribeC2DQueue">
+            <summary>
+              Looks up a localized string similar to Failed to subscribe to C2D queue&quot;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.InvalidC2DRoutingKey">
+            <summary>
+              Looks up a localized string similar to &quot;The C2D routing key cannot be an empty string.&quot;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.InvalidConnectionStringMsg">
+            <summary>
+              Looks up a localized string similar to &quot;Invalid connection string.&quot;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.InvalidEgressMqPullTimeoutInSeconds">
+            <summary>
+              Looks up a localized string similar to &quot;Invalid parameter value. The value must be in the range between 1 and 60 or -1.&quot;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.InvalidParametersMsg">
+            <summary>
+              Looks up a localized string similar to &quot;Could not complete Push operation. One or more parameters are invalid.&quot;;.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.InvalidServiceURI">
+            <summary>
+              Looks up a localized string similar to Empty service URI, Please provide valid service URI to decrypt the password.
+            </summary>
+        </member>
+        <member name="P:Eaton.IoT.DataIO.Properties.Resources.InvalidTopicExchange">
+            <summary>
+              Looks up a localized string similar to &quot;The topic exchange name cannot be an empty string.&quot;.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,57 @@
+{
+  "_id": "90ea68bb-ace4-47fa-a7c5-0bd450473148",
+  "active": true,
+  "device": {
+    "vendor": "Ephesus",
+    "family": "Generic Airmesh Device",
+    "role": "device",
+    "model": "Air Mesh",
+    "model_lname": "Air Mesh Gateway",
+    "model_sname": "Air Mesh",
+    "hardware": "Airmesh",
+    "software": "SimplySnap API",
+    "mcl_id": "master"
+  },
+  "channels": [
+    {
+      "tag": "925",
+      "mcltag": "mWtotal"
+    },
+    {
+      "tag": "926",
+      "mcltag": "mWtotalMax"
+    },
+    {
+      "tag": "162",
+      "mcltag": "mACV"
+    },
+    {
+      "tag": "1000",
+      "mcltag": "mACI"
+    },
+    {
+      "tag": "1006",
+      "mcltag": "mACMaxI"
+    },
+    {
+      "tag": "720",
+      "mcltag": "mTemperature"
+    },
+    {
+      "tag": "502",
+      "mcltag": "mMaxTemp"
+    },
+    {
+      "tag": "392",
+      "mcltag": "mHumidity"
+    },
+    {
+      "tag": "717",
+      "mcltag": "mTempAmbient"
+    },
+    {
+      "tag": "959",
+      "mcltag": "sRunTime"
+    }
+  ]
+}

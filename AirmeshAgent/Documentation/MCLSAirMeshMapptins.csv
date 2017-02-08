@@ -1,0 +1,11 @@
+Tag,MCLTag,SSApi
+925,mWtotal,active_power
+926,mWtotalMax,max_level
+162,mACV,voltage
+1000,mACI,current
+1006,mACMaxI,peak_current
+720,mTemperature,ic_temperature
+502,mMaxTemp,peak_ic_temperature
+392,mHumidity,humidity
+717,mTempAmbient,external_temperature
+959,sRunTime,uptime
